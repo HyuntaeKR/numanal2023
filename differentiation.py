@@ -7,8 +7,8 @@ def diff(func: typing.Callable[[float], float], x: float):
     """
     Return numerically differnetiated value of given function at point x.
     """
-    increment = 1e-5
-    result = (func(x + increment) - func(x)) / increment
+    inc = 1e-5
+    result = (func(x + inc) - func(x)) / inc
     return result
 
 
@@ -22,11 +22,24 @@ def jacobi(
     num_var = len(x)
     num_eqn = len(func(x))
     jacobian = np.zeros((num_eqn, num_var))
-    increment = 1e-5
+    inc = 1e-5
 
     for i in range(num_var):
         x_plus_inc = x.copy()
-        x_plus_inc[i] += increment
-        jacobian[:, i] = (func(x_plus_inc) - func(x)) / increment
+        x_plus_inc[i] += inc
+        jacobian[:, i] = (func(x_plus_inc) - func(x)) / inc
 
     return jacobian
+
+
+def gradient(f, x):
+    dim = len(x)
+    grad_f = np.zeros(dim)
+    inc = 1e-5
+
+    for i in range(dim):
+        x_plus_inc = x.copy()
+        x_plus_inc[i] += inc
+        grad_f[i] = (f(x_plus_inc) - f(x)) / inc
+
+    return grad_f
