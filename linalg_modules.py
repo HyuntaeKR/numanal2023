@@ -1,5 +1,9 @@
 import numpy as np
 
+# (Note-Dec8)
+# Definition of class is not necessary!
+# Cut down the class methods into individual functions.
+
 
 class Chapter2_3:
     def __init__(self):
@@ -164,6 +168,6 @@ class Chapter2_3:
             ) / aug_mat_lowtri[row_idx, row_idx]
 
         return root_vect
-    
+
     def backward_subs():
         pass
