@@ -32,7 +32,10 @@ def jacobi(
     return jacobian
 
 
-def gradient(f, x):
+def gradient(f, x) -> np.ndarray:
+    """
+    Return numerically calculated gradient of given scaler function at vector x.
+    """
     dim = len(x)
     grad_f = np.zeros(dim)
     inc = 1e-5
