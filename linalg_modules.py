@@ -306,3 +306,32 @@ def jacobi(
         root_vect = root_vect_new
 
     return root_vect
+
+
+def gauss_seidal(
+    coeff_mat: np.ndarray,
+    const_vect: np.ndarray,
+    init_guess: np.ndarray = None,
+    iterate: int = 100,
+    tol: float = 1e-6,
+):
+    """
+    Returns the root of a system of linear equations solved by Gauss-Seidal method.
+    """
+    row = len(coeff_mat)
+    if init_guess == None:
+        init_guess = np.ones(row)
+
+    root_vect = init_guess
+
+    for _ in range(iterate):
+        for i in range(row):
+            root_vect[i] = (
+                const_vect[i]
+                - np.dot(coeff_mat[i, :], root_vect)
+                + coeff_mat[i, i] * root_vect[i]
+            ) / coeff_mat[i, i]
+        if np.linalg.norm(np.matmul(coeff_mat, root_vect) - const_vect, 2) < tol:
+            return root_vect
+
+    return root_vect
