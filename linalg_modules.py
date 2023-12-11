@@ -1,3 +1,4 @@
+import typing
 import numpy as np
 import numpy.linalg as la
 
@@ -271,5 +272,37 @@ def thomas(tridiag: np.ndarray, const_vect: np.ndarray) -> np.ndarray:
     root_vect[-1] = const_vect[-1]
     for i in range(row - 2, -1, -1):
         root_vect[i] = const_vect[i] - tridiag[i, i + 1] * root_vect[i + 1]
+
+    return root_vect
+
+
+def jacobi(
+    coeff_mat: np.ndarray,
+    const_vect: np.ndarray,
+    init_guess: np.ndarray = None,
+    iterate: int = 100,
+    tol: float = 1e-6,
+):
+    """
+    Returns the root of a system of linear equations solved by Jacobi method.
+    """
+    row = len(coeff_mat)
+    if init_guess == None:
+        init_guess = np.ones(row)
+
+    # Decompose the coefficient matrix
+    diag_mat = np.diag(np.diag(coeff_mat))
+    # Should set the 'k' parameter to exclude main diagonal
+    lowertri = np.tril(coeff_mat, -1)
+    uppertri = np.triu(coeff_mat, 1)
+
+    root_vect = init_guess
+    for _ in range(iterate):
+        part1 = np.linalg.inv(diag_mat)
+        part2 = const_vect - np.dot((lowertri + uppertri), root_vect)
+        root_vect_new = np.dot(part1, part2)
+        if np.linalg.norm(np.matmul(coeff_mat, root_vect_new) - const_vect, 2) < tol:
+            return root_vect_new
+        root_vect = root_vect_new
 
     return root_vect
