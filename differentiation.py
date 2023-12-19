@@ -48,3 +48,39 @@ def gradient(
         grad_f[i] = (f(x_plus_inc) - f(x)) / inc
 
     return grad_f
+
+
+def finite_difference(
+    f: typing.Callable[[float], float], x: float, h: float = 1e-2, order: int = 1
+):
+    """
+    Returns derivative of function f at point x, based on central finite difference.
+    Order of remaining terms is O(h^2).
+    Maximum differentiation order of 4.
+    """
+    coeff = np.array(
+        [
+            [0, 0, 0, -1 / 2, 0, 1 / 2, 0, 0, 0],
+            [0, 0, 0, 1, -2, 1, 0, 0, 0],
+            [0, 0, -1 / 2, 1, 0, -1, 1 / 2, 0, 0],
+            [0, 0, 1, -4, 6, -4, 1, 0, 0],
+        ]
+    )
+    x_grid = np.array(
+        [
+            [
+                x - 4 * h,
+                x - 3 * h,
+                x - 2 * h,
+                x - h,
+                x,
+                x + h,
+                x + 2 * h,
+                x + 3 * h,
+                x + 4 * h,
+            ]
+        ]
+    ).T
+    f_diff = np.sum(np.dot(coeff[order - 1, :], f(x_grid))) / h**order
+
+    return f_diff
