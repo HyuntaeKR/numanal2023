@@ -96,7 +96,6 @@ def gaussian_elim(A: np.ndarray, b: np.ndarray, naive: bool = False) -> np.ndarr
         x[i] = (
             aug_ref[i, -1]
             - np.dot(
-                # This part should use aug_ref instead of aug_mat!
                 aug_ref[i, i + 1 : -1],
                 x[i + 1 :, 0],
             )
