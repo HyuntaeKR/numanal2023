@@ -5,7 +5,7 @@ from numpy import typing as nptyping
 
 def diff(func: typing.Callable[[float], float], x: float):
     """
-    Return numerically differnetiated value of given function at point x.
+    Return numerically differnetiated value of given scaler function at point x.
     """
     inc = 1e-5
     result = (func(x + inc) - func(x)) / inc
@@ -32,7 +32,9 @@ def jacobi(
     return jacobian
 
 
-def gradient(f, x) -> np.ndarray:
+def gradient(
+    f: typing.Callable[[nptyping.ArrayLike], float], x: nptyping.ArrayLike
+) -> np.ndarray:
     """
     Return numerically calculated gradient of given scaler function at vector x.
     """
