@@ -1,7 +1,9 @@
 import numpy as np
 import typing
+from numpy import typing as nptyping
 
 from differentiation import diff
+from differentiation import jacobi
 
 
 def bisection(
@@ -65,4 +67,36 @@ def newton_raphson(
                 return x
             x -= func(x) / diff_func(x)
 
+        return x
+
+
+def newton_raphson_multivar(
+    func: typing.List[typing.Callable[[nptyping.ArrayLike], nptyping.ArrayLike]],
+    x0: nptyping.ArrayLike,
+    jacobian: typing.Callable[[nptyping.ArrayLike], np.ndarray] = None,
+    tol: float = 1e-8,
+    maxiter: int = 500,
+) -> np.ndarray:
+    if jacobian is None:
+        x = x0
+        for _ in range(maxiter):
+            if np.linalg.norm(func(x)) < tol:
+                return x
+            jacobian = jacobi(func, x)
+            # Can use any system of equations solving method here
+            delta_x = -np.dot(np.linalg.inv(jacobian), func(x))
+
+            x += delta_x
+        print("Warning: Did not converge within the specified number of iterations.")
+        return x
+    else:
+        x = x0
+
+        for _ in range(maxiter):
+            if np.linalg.norm(func(x)) < tol:
+                return x
+            # Can use any system of equations solving method here
+            delta_x = -np.matmul(np.linalg.inv(jacobian(x)), func(x))
+
+            x += delta_x
         return x
