@@ -25,43 +25,44 @@ def row_echelon_form(mat: np.ndarray, naive: bool = False) -> np.ndarray:
     """
     row = len(mat)
     # Copy of matrix to return
-    # Note that simply assigning mat to mat_ref will modify the original matrix too!
+    # Note that simply assigning mat to ref will modify the original matrix too!
     # =====
     # When you assign an ndarray to another variable,
     # it creates a reference to the same data rather than making a copy of the data.
     # ===== By. ChatGPT
 
-    mat_ref = np.copy(mat)
+    ref = np.copy(mat)  # ref: row echelon form
 
-    for row_idx in range(row - 1):
+    for i in range(row - 1):
         if ~naive:
-            mat_ref = partial_pivot(mat_ref, row_idx)
-        for row_idx2 in range(row_idx + 1, row):
-            if mat_ref[row_idx2, row_idx] != 0:
-                multiplier = mat_ref[row_idx2, row_idx] / mat_ref[row_idx, row_idx]
-                mat_ref[row_idx2, :] = (
-                    mat_ref[row_idx2, :] - multiplier * mat_ref[row_idx, :]
-                )
+            ref = partial_pivot(ref, i)
+        for j in range(i + 1, row):
+            if ref[j, i] != 0:
+                multiplier = ref[j, i] / ref[i, i]
+                ref[j, :] = ref[j, :] - multiplier * ref[i, :]
 
-    return mat_ref
+    return ref
 
 
-def get_sys_info(coeff_mat: np.ndarray, const_vect: np.ndarray) -> int:
+def get_sys_info(A: np.ndarray, b: np.ndarray) -> int:
     """
     Prints out the info for system of linear equations
     and returns number of solutions.
-    """
-    row, column = np.shape(coeff_mat)
-    rank_coeff = la.matrix_rank(coeff_mat)
-    # Augmented matrix
-    aug_mat = np.hstack((coeff_mat, const_vect))
-    rank_aug = la.matrix_rank(aug_mat)
 
-    if rank_aug == rank_coeff + 1:
+    System >> Ax=b
+    ---
+    """
+    row, column = np.shape(A)
+    rank_of_A = la.matrix_rank(A)
+    # Augmented matrix
+    aug = np.hstack((A, b))
+    rank_of_aug = la.matrix_rank(aug)
+
+    if rank_of_aug == rank_of_A + 1:
         print("Inconsistent system. No solution.")
         num_sol = 0
         return num_sol
-    elif rank_aug == rank_coeff:
+    elif rank_of_aug == rank_of_A:
         if row == column:
             print("Consistent and independent system. Unique solution.")
             num_sol = 1
@@ -75,32 +76,33 @@ def get_sys_info(coeff_mat: np.ndarray, const_vect: np.ndarray) -> int:
         return np.nan
 
 
-def gaussian_elim(
-    coeff_mat: np.ndarray, const_vect: np.ndarray, naive: bool = False
-) -> np.ndarray:
+def gaussian_elim(A: np.ndarray, b: np.ndarray, naive: bool = False) -> np.ndarray:
     """
     Implements Gaussian elimination.
     Returns the root of the system.
+
+    System >> Ax=b
+    ---
     """
-    row = len(coeff_mat)
-    num_sol = get_sys_info(coeff_mat, const_vect)
+    row = len(A)
+    num_sol = get_sys_info(A, b)
     if num_sol != 1:
-        raise Exception("Cannot get root!")
-    aug_mat_ref = row_echelon_form(np.hstack((coeff_mat, const_vect)), naive)
-    root_vect = np.zeros((row, 1))
+        raise Exception("Cannot get root of given system.")
+    aug_ref = row_echelon_form(np.hstack((A, b)), naive)
+    x = np.zeros((row, 1))
     # Backward substitution
     # Can iterate through range in reverse order.
-    for row_idx in range(row - 1, -1, -1):
-        root_vect[row_idx] = (
-            aug_mat_ref[row_idx, -1]
+    for i in range(row - 1, -1, -1):
+        x[i] = (
+            aug_ref[i, -1]
             - np.dot(
-                # This part should use aug_mat_ref instead of aug_mat!
-                aug_mat_ref[row_idx, row_idx + 1 : -1],
-                root_vect[row_idx + 1 :, 0],
+                # This part should use aug_ref instead of aug_mat!
+                aug_ref[i, i + 1 : -1],
+                x[i + 1 :, 0],
             )
-        ) / aug_mat_ref[row_idx, row_idx]
+        ) / aug_ref[i, i]
 
-    return root_vect
+    return x
 
 
 def rev_partial_pivot(mat: np.ndarray, column: int) -> np.ndarray:
@@ -126,105 +128,91 @@ def backward_elim(mat: np.ndarray, naive: bool = False) -> np.ndarray:
     by elemetary row operation.
     """
     row = len(mat)
-    mat_lowtri = np.copy(mat)
+    lowtri = np.copy(mat)
 
-    for row_idx in range(row - 1, 0, -1):
+    for i in range(row - 1, 0, -1):
         if ~naive:
-            mat_lowtri = rev_partial_pivot(mat_lowtri, row_idx)
-        for row_idx2 in range(row_idx - 1, -1, -1):
-            multiplier = mat_lowtri[row_idx2, row_idx] / mat_lowtri[row_idx, row_idx]
-            mat_lowtri[row_idx2, :] = (
-                mat_lowtri[row_idx2, :] - multiplier * mat_lowtri[row_idx, :]
-            )
+            lowtri = rev_partial_pivot(lowtri, i)
+        for j in range(i - 1, -1, -1):
+            multiplier = lowtri[j, i] / lowtri[i, i]
+            lowtri[j, :] = lowtri[j, :] - multiplier * lowtri[i, :]
 
-    return mat_lowtri
+    return lowtri
 
 
-def rev_gaussian_elim(
-    coeff_mat: np.ndarray, const_vect: np.ndarray, naive: bool = False
-) -> np.ndarray:
+def rev_gaussian_elim(A: np.ndarray, b: np.ndarray, naive: bool = False) -> np.ndarray:
     """
     Reversed Gaussian elimination.
     Implements backward elimination and forward substitution.
+
+    System >> Ax=b
+    ---
     """
-    row, column = np.shape(coeff_mat)
-    num_sol = get_sys_info(coeff_mat, const_vect)
+    row = len(A)
+    num_sol = get_sys_info(A, b)
     if num_sol != 1:
         raise Exception("Cannot get root!")
-    aug_mat_lowtri = backward_elim(np.hstack((coeff_mat, const_vect)), naive)
-    root_vect = np.zeros((row, 1))
+    aug_lowtri = backward_elim(np.hstack((A, b)), naive)
+    x = np.zeros((row, 1))
     # Forward substitution
-    for row_idx in range(row):
-        root_vect[row_idx] = (
-            aug_mat_lowtri[row_idx, -1]
-            - np.dot(aug_mat_lowtri[row_idx, :row_idx], root_vect[:row_idx, 0])
-        ) / aug_mat_lowtri[row_idx, row_idx]
+    for i in range(row):
+        x[i] = (aug_lowtri[i, -1] - np.dot(aug_lowtri[i, :i], x[:i, 0])) / aug_lowtri[
+            i, i
+        ]
 
-    return root_vect
+    return x
 
 
-def lu_decomp(coeff_mat: np.ndarray, const_vect: np.ndarray) -> typing.List[np.ndarray]:
+def lu_decomp(A: np.ndarray, b: np.ndarray) -> typing.List[np.ndarray]:
     """
     Implements LU decomposition based on Doolittle's method.
     Returns list of [L, U, b'].
     Basically the same algorithm with row_echelon_form but
     records the multiplier value in L.
     """
-    row = len(coeff_mat)
+    row = len(A)
     # Create identity matrix for L
-    lowertri = np.eye(row)
-    uppertri = np.copy(coeff_mat)
-    pivot_const = np.copy(const_vect)
+    L = np.eye(row)
+    U = np.copy(A)
+    pivot_b = np.copy(b)
 
-    for row_idx in range(row - 1):
+    for i in range(row - 1):
         # Implement partial pivoting by default
-        max_row = np.argmax(abs(uppertri[row_idx:, row_idx])) + row_idx
-        if max_row != row_idx:
-            uppertri[[row_idx, max_row], :] = uppertri[[max_row, row_idx], :]
-            pivot_const[[row_idx, max_row]] = pivot_const[[max_row, row_idx]]
+        max_row = np.argmax(abs(U[i:, i])) + i
+        if max_row != i:
+            U[[i, max_row], :] = U[[max_row, i], :]
+            pivot_b[[i, max_row]] = pivot_b[[max_row, i]]
 
-        for row_idx2 in range(row_idx + 1, row):
-            multiplier = uppertri[row_idx2, row_idx] / uppertri[row_idx, row_idx]
-            uppertri[row_idx2, :] = (
-                uppertri[row_idx2, :] - multiplier * uppertri[row_idx, :]
-            )
-            lowertri[row_idx2, row_idx] = multiplier
+        for j in range(i + 1, row):
+            multiplier = U[j, i] / U[i, i]
+            U[j, :] = U[j, :] - multiplier * U[i, :]
+            L[j, i] = multiplier
 
-    return [lowertri, uppertri, pivot_const]
+    return [L, U, pivot_b]
 
 
-def solve_lud(coeff_mat: np.ndarray, const_vect: np.ndarray) -> np.ndarray:
+def solve_lud(A: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
     Returns the root of a system of linear equations using LU decomposition.
     """
     # Use len() instead of using np.shape() and not using the column variable
-    row = len(coeff_mat)
-    lowertri, uppertri, pivot_const = lu_decomp(coeff_mat, const_vect)
+    row = len(A)
+    L, U, pivot_b = lu_decomp(A, b)
     # Forward substitution to get vector y where,
     # Ly = b
-    vect_y = np.zeros((row, 1))
-    for row_idx in range(row):
-        vect_y[row_idx] = (
-            pivot_const[row_idx]
-            - np.dot(lowertri[row_idx, :row_idx], vect_y[:row_idx, 0])
-        ) / lowertri[row_idx, row_idx]
-    # print(uppertri)
-    # print(vect_y)
+    y = np.zeros((row, 1))
+    for i in range(row):
+        y[i] = (pivot_b[i] - np.dot(L[i, :i], y[:i, 0])) / L[i, i]
     # Backward substitution to get root vector where,
     # Ux = y
-    root_vect = np.zeros((row, 1))
-    for row_idx in range(row - 1, -1, -1):
-        root_vect[row_idx] = (
-            vect_y[row_idx, 0]
-            - np.dot(uppertri[row_idx, row_idx + 1 :], root_vect[row_idx + 1 :])
-        ) / uppertri[row_idx, row_idx]
+    x = np.zeros((row, 1))
+    for i in range(row - 1, -1, -1):
+        x[i] = (y[i, 0] - np.dot(U[i, i + 1 :], x[i + 1 :])) / U[i, i]
 
-    return root_vect
+    return x
 
 
-def tridiagonal(
-    size: int, main_diag: float, sub_diag: float, sup_diag: float
-) -> np.ndarray:
+def tridiagonal(size: int, main: float, sub: float, sup: float) -> np.ndarray:
     """
     Returns a tridiagonal array with (size)x(size).
     Diagonal values are taken as parameters.
@@ -234,104 +222,109 @@ def tridiagonal(
     for i in range(size):
         for j in range(size):
             if i == j:
-                tridiag[i][j] = main_diag
+                tridiag[i][j] = main
             if j == i + 1:
                 if i + 1 >= size:
                     pass
                 else:
-                    tridiag[i][j] = sup_diag
+                    tridiag[i][j] = sup
             if j == i - 1:
                 if i - 1 < 0:
                     pass
                 else:
-                    tridiag[i][j] = sub_diag
+                    tridiag[i][j] = sub
 
     return tridiag
 
 
-def thomas(tridiag: np.ndarray, const_vect: np.ndarray) -> np.ndarray:
+def thomas(T: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
     Returns the root of a system of linear equations using the
     Thomas algorithm.
+
+    System >> Tx = b
+    ---
     """
-    row = len(tridiag)
+    row = len(T)
     for i in range(row):
         # Normalize by diagonal compound
-        tridiag[i, :] = tridiag[i, :] / tridiag[i, i]
-        const_vect[i] = const_vect[i] / tridiag[i, i]
+        T[i, :] = T[i, :] / T[i, i]
+        b[i] = b[i] / T[i, i]
         # Eliminate non-zero entries below the diagonal compound
-        for i2 in range(i + 1, row):
-            if tridiag[i2, i] != 0:
-                tridiag[i2, :] -= tridiag[i, :] * tridiag[i2, i]
+        for j in range(i + 1, row):
+            if T[j, i] != 0:
+                T[j, :] -= T[i, :] * T[j, i]
                 # Subtract corresponding constant vector entries
-                const_vect[i2] -= const_vect[i] * tridiag[i2, i]
+                b[j] -= b[i] * T[j, i]
 
     # Use backward substitution to get the root vector
-    root_vect = np.zeros((row, 1))
+    x = np.zeros((row, 1))
     # Last entry is simply equated
-    root_vect[-1] = const_vect[-1]
+    x[-1] = b[-1]
     for i in range(row - 2, -1, -1):
-        root_vect[i] = const_vect[i] - tridiag[i, i + 1] * root_vect[i + 1]
+        x[i] = b[i] - T[i, i + 1] * x[i + 1]
 
-    return root_vect
+    return x
 
 
 def jacobi(
-    coeff_mat: np.ndarray,
-    const_vect: np.ndarray,
-    init_guess: np.ndarray = None,
-    iterate: int = 100,
+    A: np.ndarray,
+    b: np.ndarray,
+    x0: np.ndarray = None,
+    maxiter: int = 100,
     tol: float = 1e-6,
 ):
     """
     Returns the root of a system of linear equations solved by Jacobi method.
+
+    System >> Ax=b
+    ---
     """
-    row = len(coeff_mat)
-    if init_guess == None:
-        init_guess = np.ones(row)
+    row = len(A)
+    if x0 is None:
+        x0 = np.ones(row)
 
-    # Decompose the coefficient matrix
-    diag_mat = np.diag(np.diag(coeff_mat))
+    # Decompose the coefficient matrix into D, L0, U0
+    D = np.diag(np.diag(A))
     # Should set the 'k' parameter to exclude main diagonal
-    lowertri = np.tril(coeff_mat, -1)
-    uppertri = np.triu(coeff_mat, 1)
+    L0 = np.tril(A, -1)
+    U0 = np.triu(A, 1)
 
-    root_vect = init_guess
-    for _ in range(iterate):
-        part1 = np.linalg.inv(diag_mat)
-        part2 = const_vect - np.dot((lowertri + uppertri), root_vect)
-        root_vect_new = np.dot(part1, part2)
-        if np.linalg.norm(np.matmul(coeff_mat, root_vect_new) - const_vect, 2) < tol:
-            return root_vect_new
-        root_vect = root_vect_new
+    x = x0
+    for _ in range(maxiter):
+        part1 = np.linalg.inv(D)
+        part2 = b - np.dot((L0 + U0), x)
+        x_new = np.dot(part1, part2)
+        if np.linalg.norm(np.matmul(A, x_new) - b, 2) < tol:
+            return x_new
+        x = x_new
 
-    return root_vect
+    return x
 
 
 def gauss_seidal(
-    coeff_mat: np.ndarray,
-    const_vect: np.ndarray,
-    init_guess: np.ndarray = None,
-    iterate: int = 100,
+    A: np.ndarray,
+    b: np.ndarray,
+    x0: np.ndarray = None,
+    maxiter: int = 100,
     tol: float = 1e-6,
 ):
     """
     Returns the root of a system of linear equations solved by Gauss-Seidal method.
+
+    System >> Ax=b
+    ---
     """
-    row = len(coeff_mat)
-    if init_guess == None:
-        init_guess = np.ones(row)
+    row = len(A)
+    if x0 is None:
+        x0 = np.ones(row)
 
-    root_vect = init_guess
+    x = x0
 
-    for _ in range(iterate):
+    for _ in range(maxiter):
         for i in range(row):
-            root_vect[i] = (
-                const_vect[i]
-                - np.dot(coeff_mat[i, :], root_vect)
-                + coeff_mat[i, i] * root_vect[i]
-            ) / coeff_mat[i, i]
-        if np.linalg.norm(np.matmul(coeff_mat, root_vect) - const_vect, 2) < tol:
-            return root_vect
+            x[i] = (b[i] - np.dot(A[i, :], x) + A[i, i] * x[i]) / A[i, i]
+        if np.linalg.norm(np.matmul(A, x) - b, 2) < tol:
+            return x
 
-    return root_vect
+    return x
