@@ -166,7 +166,7 @@ def lu_decomp(A: np.ndarray, b: np.ndarray) -> typing.List[np.ndarray]:
     """
     Implements LU decomposition based on Doolittle's method.
     Returns list of [L, U, b'].
-    Basically the same algorithm with row_echelon_form but
+    Basically the same algorithm with `row_echelon_form` but
     records the multiplier value in L.
     """
     row = len(A)
@@ -194,7 +194,6 @@ def solve_lud(A: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
     Returns the root of a system of linear equations using LU decomposition.
     """
-    # Use len() instead of using np.shape() and not using the column variable
     row = len(A)
     L, U, pivot_b = lu_decomp(A, b)
     # Forward substitution to get vector y where,
