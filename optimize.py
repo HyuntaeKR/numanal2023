@@ -180,7 +180,8 @@ if __name__ == "__main__":
     def my_func(x_vect: nptyping.ArrayLike):
         x = x_vect[0]
         y = x_vect[1]
-        return x**2 + y**2 + np.sin(x * y)
+        out = -np.exp(-(x**2 + y**2))
+        return out
 
     X0 = np.array([[1.0, 2.0], [1.5, 2.5], [2.0, 3.0]]).T
     minimum, traj = nelder_mead(my_func, X0, traj=True)
