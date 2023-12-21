@@ -6,9 +6,10 @@ from numpy import typing as nptyping
 def diff(func: typing.Callable[[float], float], x: float):
     """
     Return numerically differnetiated value of given scaler function at point x.
+    Uses central difference.
     """
     inc = 1e-5
-    result = (func(x + inc) - func(x)) / inc
+    result = (func(x + inc) - func(x - inc)) / 2 * inc
     return result
 
 
