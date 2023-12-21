@@ -6,9 +6,10 @@ from numpy import typing as nptyping
 def diff(func: typing.Callable[[float], float], x: float):
     """
     Return numerically differnetiated value of given scaler function at point x.
+    Uses central difference.
     """
     inc = 1e-5
-    result = (func(x + inc) - func(x)) / inc
+    result = (func(x + inc) - func(x - inc)) / 2 * inc
     return result
 
 
@@ -84,3 +85,46 @@ def finite_difference(
     f_diff = np.sum(np.dot(coeff[order - 1, :], f(x_grid))) / h**order
 
     return f_diff
+
+
+def hessian(
+    f: typing.Callable[[nptyping.ArrayLike], float], x: nptyping.ArrayLike
+) -> np.ndarray:
+    n = len(x)
+    H = np.zeros((n, n))
+    inc = 1e-5
+
+    for i in range(n):
+        for j in range(n):
+            if i == j:
+                x_plus_inc = x.copy()
+                x_minus_inc = x.copy()
+                x_plus_inc[i] += inc
+                x_minus_inc[i] -= inc
+                # Second order partial derivative
+                H[i, j] = (f(x_plus_inc) - 2 * f(x) + f(x_minus_inc)) / inc**2
+            else:
+                x_plus_plus_inc = x.copy()
+                x_plus_plus_inc[i] += inc
+                x_plus_plus_inc[j] += inc
+
+                x_plus_minus_inc = x.copy()
+                x_plus_minus_inc[i] += inc
+                x_plus_minus_inc[j] -= inc
+
+                x_minus_plus_inc = x.copy()
+                x_minus_plus_inc[i] -= inc
+                x_minus_plus_inc[j] += inc
+
+                x_minus_minus_inc = x.copy()
+                x_minus_minus_inc[i] -= inc
+                x_minus_minus_inc[j] -= inc
+
+                H[i, j] = (
+                    f(x_plus_plus_inc)
+                    - f(x_plus_minus_inc)
+                    - f(x_minus_plus_inc)
+                    + f(x_minus_minus_inc)
+                ) / (4 * inc**2)
+
+    return H

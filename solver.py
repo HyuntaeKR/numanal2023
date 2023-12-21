@@ -71,7 +71,7 @@ def newton_raphson(
 
 
 def newton_raphson_multivar(
-    func: typing.List[typing.Callable[[nptyping.ArrayLike], nptyping.ArrayLike]],
+    func: typing.Callable[[nptyping.ArrayLike], nptyping.ArrayLike],
     x0: nptyping.ArrayLike,
     jacobian: typing.Callable[[nptyping.ArrayLike], np.ndarray] = None,
     tol: float = 1e-8,
@@ -84,7 +84,7 @@ def newton_raphson_multivar(
                 return x
             jacobian = jacobi(func, x)
             # Can use any system of equations solving method here
-            delta_x = -np.dot(np.linalg.inv(jacobian), func(x))
+            delta_x = -np.matmul(np.linalg.inv(jacobian), func(x))
 
             x += delta_x
         print("Warning: Did not converge within the specified number of iterations.")
